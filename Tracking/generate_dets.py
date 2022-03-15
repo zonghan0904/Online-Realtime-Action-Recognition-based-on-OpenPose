@@ -2,7 +2,7 @@ import os
 import errno
 import numpy as np
 import cv2
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _run_in_batches(f, data_dict, out, batch_size):
@@ -76,8 +76,8 @@ class ImageEncoder(object):
         tf.import_graph_def(graph_def, name="net")
         self.session = tf.Session(graph=self.graph)
 
-        self.input_var = self.graph.get_tensor_by_name("net/%s:0" % input_name)
-        self.output_var = self.graph.get_tensor_by_name("net/%s:0" % output_name)
+        self.input_var = self.graph.get_tensor_by_name("%s:0" % input_name)
+        self.output_var = self.graph.get_tensor_by_name("%s:0" % output_name)
 
         assert len(self.output_var.get_shape()) == 2
         assert len(self.input_var.get_shape()) == 4

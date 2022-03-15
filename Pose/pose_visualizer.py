@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import cv2 as cv
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from .coco_format import CocoPart, CocoColors, CocoPairsRender
 from .pose_estimator import estimate
 
@@ -21,8 +21,8 @@ class TfPoseVisualizer:
         tf.import_graph_def(graph_def, name='TfPoseEstimator')
         self.persistent_sess = tf.Session(graph=self.graph)
 
-        self.tensor_image = self.graph.get_tensor_by_name('TfPoseEstimator/image:0')
-        self.tensor_output = self.graph.get_tensor_by_name('TfPoseEstimator/Openpose/concat_stage7:0')
+        self.tensor_image = self.graph.get_tensor_by_name('image:0')
+        self.tensor_output = self.graph.get_tensor_by_name('Openpose/concat_stage7:0')
         self.heatMat = self.pafMat = None
 
     @staticmethod
