@@ -119,3 +119,4 @@ Pose/graph_models/mobilenet_thin/graph.pb
 Pose/graph_models/VGG_origin/graph_opt.pb
 test_out/webcam_test_out.mp4
 test_out/webcam_tf_out.mp4
+logs
