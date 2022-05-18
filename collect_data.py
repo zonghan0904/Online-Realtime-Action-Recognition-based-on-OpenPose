@@ -13,7 +13,7 @@ args = parser.parse_args()
 
 # 导入相关模型
 estimator = load_pretrain_model('VGG_origin')
-action_classifier = load_action_premodel('Action/ncrl_framewise_recognition.h5')
+action_classifier = load_action_premodel('Action/framewise_recognition.h5')
 
 # 参数初始化
 realtime_fps = '0.0000'
@@ -29,7 +29,8 @@ video_writer = set_video_writer(cap, write_fps=int(7.0))
 
 
 # # 保存关节数据的txt文件，用于训练过程(for training)
-# f = open('origin_data.txt', 'a+')
+file_name = args.video.split(".")[0]
+f = open(f'{file_name}.txt', 'a+')
 
 while cv.waitKey(1) < 0:
     has_frame, show = cap.read()
@@ -69,10 +70,10 @@ while cv.waitKey(1) < 0:
         video_writer.write(show)
 
         # # 采集数据，用于训练过程(for training)
-        # joints_norm_per_frame = np.array(pose[-1]).astype(np.str)
-        # f.write(' '.join(joints_norm_per_frame))
-        # f.write('\n')
+        joints_norm_per_frame = np.array(pose[-1]).astype(np.str)
+        f.write(' '.join(joints_norm_per_frame))
+        f.write('\n')
 
 video_writer.release()
 cap.release()
-# f.close()
+f.close()

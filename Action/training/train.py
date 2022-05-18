@@ -6,8 +6,8 @@ from sklearn.model_selection import train_test_split
 from keras.utils import np_utils
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
-from keras.layers.normalization import BatchNormalization
-from keras.optimizers import Adam
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.optimizers import Adam
 from keras.models import load_model
 
 import matplotlib.pyplot as plt
@@ -24,11 +24,17 @@ class Actions(Enum):
     # wave = 3
 
     # framewise_recognition_under_scene.h5
-    stand = 0
-    walk = 1
-    operate = 2
-    fall_down = 3
+    # stand = 0
+    # walk = 1
+    # operate = 2
+    # fall_down = 3
     # run = 4
+
+    # ncrl_framewise_recognition.h5
+    sit = 0
+    wave = 1
+    fall_down = 2
+    none = 3
 
 
 # Callback class to visialize training progress
@@ -106,19 +112,19 @@ def plot_confusion_matrix(cm, classes,
 
 
 # load data
-raw_data = pd.read_csv('data_with_scene.csv', header=0)
+raw_data = pd.read_csv('ncrl_data.csv', header=0)
 dataset = raw_data.values
-# X = dataset[:, 0:36].astype(float)
-# Y = dataset[:, 36]
-X = dataset[0:3289, 0:36].astype(float)  # 忽略run数据
-Y = dataset[0:3289, 36]
+X = dataset[:, 0:36].astype(float)
+Y = dataset[:, 36]
+# X = dataset[0:3289, 0:36].astype(float)  # 忽略run数据
+# Y = dataset[0:3289, 36]
 
 # 将类别编码为数字
 # encoder = LabelEncoder()
 # encoder_Y = encoder.fit_transform(Y)
 # print(encoder_Y[0], encoder_Y[900], encoder_Y[1800], encoder_Y[2700])
 # encoder_Y = [0]*744 + [1]*722 + [2]*815 + [3]*1008 + [4]*811
-encoder_Y = [0]*744 + [1]*722 + [2]*815 + [3]*1008
+encoder_Y = [0]*2096 + [1]*2128 + [2]*1639 + [3]*2131
 # one hot 编码
 dummy_Y = np_utils.to_categorical(encoder_Y)
 
@@ -141,35 +147,31 @@ model.compile(loss='categorical_crossentropy', optimizer=Adam(0.0001), metrics=[
 model.fit(X_train, Y_train, batch_size=32, epochs=20, verbose=1, validation_data=(X_test, Y_test), callbacks=[his])
 model.summary()
 his.loss_plot('epoch')
-# model.save('framewise_recognition.h5')
+model.save('ncrl_framewise_recognition.h5')
 
-# # evaluate and draw confusion matrix
-# print('Test:')
-# score, accuracy = model.evaluate(X_test,Y_test,batch_size=32)
-# print('Test Score:{:.3}'.format(score))
-# print('Test accuracy:{:.3}'.format(accuracy))
-# # confusion matrix
-# Y_pred = model.predict(X_test)
-# cfm = confusion_matrix(np.argmax(Y_test,axis=1), np.argmax(Y_pred, axis=1))
-# np.set_printoptions(precision=2)
-#
-# plt.figure()
-# class_names = ['squat', 'stand', 'walk', 'wave']
-# plot_confusion_matrix(cfm, classes=class_names, title='Confusion Matrix')
-# plt.show()
+# evaluate and draw confusion matrix
+print('Test:')
+score, accuracy = model.evaluate(X_test,Y_test,batch_size=32)
+print('Test Score:{:.3}'.format(score))
+print('Test accuracy:{:.3}'.format(accuracy))
+# confusion matrix
+Y_pred = model.predict(X_test)
+cfm = confusion_matrix(np.argmax(Y_test,axis=1), np.argmax(Y_pred, axis=1))
+np.set_printoptions(precision=2)
 
-# # test
-# model = load_model('framewise_recognition.h5')
-#
-# test_input = [0.43, 0.46, 0.43, 0.52, 0.4, 0.52, 0.39, 0.61, 0.4,
-#               0.67, 0.46, 0.52, 0.46, 0.61, 0.46, 0.67, 0.42, 0.67,
-#               0.42, 0.81, 0.43, 0.91, 0.45, 0.67, 0.45, 0.81, 0.45,
-#               0.91, 0.42, 0.44, 0.43, 0.44, 0.42, 0.46, 0.44, 0.46]
-# test_np = np.array(test_input)
-# test_np = test_np.reshape(-1, 36)
-#
-# test_np = np.array(X[1033]).reshape(-1, 36)
-# if test_np.size > 0:
-#     pred = np.argmax(model.predict(test_np))
-#     init_label = Actions(pred).name
-#     print(init_label)
+plt.figure()
+class_names = ['sit', 'wave', 'fall_down', 'none']
+plot_confusion_matrix(cfm, classes=class_names, title='Confusion Matrix')
+plt.show()
+
+# test
+model = load_model('ncrl_framewise_recognition.h5')
+
+test_input = [0.43,0.22,0.49,0.26,0,0,0,0,0,0,0.49,0.26,0.43,0.41,0.37,0.5,0.49,0.52,0.35,0.54,0.29,0.72,0.5,0.54,0.35,0.54,0.37,0.76,0,0,0.43,0.2,0,0,0.46,0.2]
+test_np = np.array(test_input)
+test_np = test_np.reshape(-1, 36)
+
+if test_np.size > 0:
+    pred = np.argmax(model.predict(test_np))
+    init_label = Actions(pred).name
+    print(init_label)
