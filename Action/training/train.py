@@ -112,7 +112,7 @@ def plot_confusion_matrix(cm, classes,
 
 
 # load data
-raw_data = pd.read_csv('ncrl_data.csv', header=0)
+raw_data = pd.read_csv('ncrl_data_reduced.csv', header=0)
 dataset = raw_data.values
 X = dataset[:, 0:36].astype(float)
 Y = dataset[:, 36]
@@ -124,7 +124,7 @@ Y = dataset[:, 36]
 # encoder_Y = encoder.fit_transform(Y)
 # print(encoder_Y[0], encoder_Y[900], encoder_Y[1800], encoder_Y[2700])
 # encoder_Y = [0]*744 + [1]*722 + [2]*815 + [3]*1008 + [4]*811
-encoder_Y = [0]*2096 + [1]*2128 + [2]*1639 + [3]*2131
+encoder_Y = [0]*2014 + [1]*2041 + [2]*1148 + [3]*2053
 # one hot 编码
 dummy_Y = np_utils.to_categorical(encoder_Y)
 
@@ -167,7 +167,7 @@ plt.show()
 # test
 model = load_model('ncrl_framewise_recognition.h5')
 
-test_input = [0.43,0.22,0.49,0.26,0,0,0,0,0,0,0.49,0.26,0.43,0.41,0.37,0.5,0.49,0.52,0.35,0.54,0.29,0.72,0.5,0.54,0.35,0.54,0.37,0.76,0,0,0.43,0.2,0,0,0.46,0.2]
+test_input = [ 0.43,0.22,0.49,0.26,0,0,0,0,0,0,0.49,0.26,0.43,0.41,0.37,0.5,0.49,0.52,0.35,0.54,0.29,0.72,0.5,0.54,0.35,0.54,0.37,0.76,0,0,0.43,0.2,0,0,0.46,0.2]
 test_np = np.array(test_input)
 test_np = test_np.reshape(-1, 36)
 
