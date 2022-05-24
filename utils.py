@@ -25,7 +25,7 @@ def choose_run_mode(args):
             print("Input video file ", args.video, " doesn't exist")
             sys.exit(1)
         cap = cv.VideoCapture(args.video)
-        out_file_path = str(out_file_path / (args.video[:-4] + '_tf_out.mp4'))
+        out_file_path = str(out_file_path / (args.video.split("/")[-1][:-4] + '_tf_out.mp4'))
     else:
         # Webcam input
         cap = cv.VideoCapture(0)
@@ -49,7 +49,8 @@ def load_pretrain_model(model):
 
 
 def set_video_writer(cap, write_fps=15):
+    print(out_file_path)
     return cv.VideoWriter(out_file_path,
                           cv.VideoWriter_fourcc(*'mp4v'),
-                          write_fps,
+                          cap.get(cv.CAP_PROP_FPS),
                           (round(cap.get(cv.CAP_PROP_FRAME_WIDTH)), round(cap.get(cv.CAP_PROP_FRAME_HEIGHT))))

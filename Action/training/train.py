@@ -34,7 +34,7 @@ class Actions(Enum):
     sit = 0
     wave = 1
     fall_down = 2
-    none = 3
+    others = 3
 
 
 # Callback class to visialize training progress
@@ -124,7 +124,7 @@ Y = dataset[:, 36]
 # encoder_Y = encoder.fit_transform(Y)
 # print(encoder_Y[0], encoder_Y[900], encoder_Y[1800], encoder_Y[2700])
 # encoder_Y = [0]*744 + [1]*722 + [2]*815 + [3]*1008 + [4]*811
-encoder_Y = [0]*2014 + [1]*2041 + [2]*1148 + [3]*2053
+encoder_Y = [0]*2310 + [1]*2293 + [2]*581 + [3]*2691
 # one hot 编码
 dummy_Y = np_utils.to_categorical(encoder_Y)
 
@@ -160,7 +160,7 @@ cfm = confusion_matrix(np.argmax(Y_test,axis=1), np.argmax(Y_pred, axis=1))
 np.set_printoptions(precision=2)
 
 plt.figure()
-class_names = ['sit', 'wave', 'fall_down', 'none']
+class_names = ['sit', 'wave', 'fall_down', 'others']
 plot_confusion_matrix(cfm, classes=class_names, title='Confusion Matrix')
 plt.show()
 

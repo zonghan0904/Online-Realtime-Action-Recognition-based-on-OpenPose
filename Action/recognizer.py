@@ -19,7 +19,7 @@ clip_length = 15
 max_cosine_distance = 0.3
 nn_budget = None
 nms_max_overlap = 1.0
-PRED_THRESHOLD = 0.9
+PRED_THRESHOLD = 0.51
 
 # 初始化deep_sort
 model_filename = str(file_path/'Tracking/graph_model/mars-small128.pb')
@@ -153,24 +153,24 @@ def framewise_recognize(pose, pretrained_model):
                 joints_norm_single_person = np.array(joints_norm_single_person).reshape(-1, 36)
                 if np.count_nonzero(joints_norm_single_person) > 20:
                     probs = pretrained_model.predict(joints_norm_single_person)
+                    print(probs)
                     max_score = np.max(probs)
                     if max_score < PRED_THRESHOLD:
-                        init_label = "none"
+                        init_label = "others"
                     else:
                         pred = np.argmax(probs)
                         init_label = Actions(pred).name
                 else:
-                    init_label = "none"
+                    init_label = "others"
                     cv.putText(frame, 'WARNING: not enough joints to recognize action!',
                                (20, 60), cv.FONT_HERSHEY_SIMPLEX, 1.5, (30, 105, 210), 4)
 
-                if init_label != "none":
-                    # 显示动作类别
-                    cv.putText(frame, init_label, (xmin + 80, ymin - 45), cv.FONT_HERSHEY_SIMPLEX, 1, trk_clr, 3)
-                    # 异常预警(under scene)
-                    if init_label == 'fall_down':
-                        cv.putText(frame, 'WARNING: someone is falling down!', (20, 60), cv.FONT_HERSHEY_SIMPLEX,
-                                   1.5, (0, 0, 255), 4)
+                # 显示动作类别
+                cv.putText(frame, init_label, (xmin + 80, ymin - 45), cv.FONT_HERSHEY_SIMPLEX, 1, trk_clr, 3)
+                # 异常预警(under scene)
+                if init_label == 'fall_down':
+                    cv.putText(frame, 'WARNING: someone is falling down!', (20, 60), cv.FONT_HERSHEY_SIMPLEX,
+                               1.5, (0, 0, 255), 4)
             # 画track_box
             cv.rectangle(frame, (xmin - 10, ymin - 30), (xmax + 10, ymax), trk_clr, 2)
     return frame

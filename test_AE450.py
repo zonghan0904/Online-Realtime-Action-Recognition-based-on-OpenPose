@@ -3,7 +3,7 @@ import cv2 as cv
 import argparse
 import numpy as np
 import time
-from utils import choose_run_mode, load_pretrain_model, set_video_writer
+from utils import load_pretrain_model
 from Pose.pose_visualizer import TfPoseVisualizer
 from Action.recognizer import load_action_premodel, framewise_recognize
 
@@ -35,9 +35,18 @@ def cv2_to_imgmsg(cv_image):
     img_msg.step = len(img_msg.data) // img_msg.height # That double line is actually integer division, not a comment
     return img_msg
 
+def set_video_writer(write_fps=15):
+    out_file_path = "./test_out/AE450.mp4"
+    print(out_file_path)
+    return cv.VideoWriter(out_file_path,
+                          cv.VideoWriter_fourcc(*'mp4v'),
+                          write_fps,
+                          (1280, 720))
+
 class V:
     def __init__(self):
-        self.sub = rospy.Subscriber("/camera/color/image_raw", Image, self.image_cb)
+        # self.sub = rospy.Subscriber("/camera1/color/image_raw", Image, self.image_cb)
+        self.sub = rospy.Subscriber("/device_0/sensor_1/Color_0/image/data", Image, self.image_cb)
         self.image = np.zeros((1, 1))
 
     def image_cb(self, msg):
@@ -52,7 +61,7 @@ args = parser.parse_args()
 
 # 导入相关模型
 estimator = load_pretrain_model('VGG_origin')
-action_classifier = load_action_premodel('Action/ncrl_framewise_recognition.h5')
+action_classifier = load_action_premodel('Action/training/ncrl_framewise_recognition.h5')
 
 # 参数初始化
 realtime_fps = '0.0000'
@@ -64,6 +73,7 @@ frame_count = 0
 
 # # 保存关节数据的txt文件，用于训练过程(for training)
 # f = open('origin_data.txt', 'a+')
+video_writer = set_video_writer(write_fps=int(7.0))
 
 while cv.waitKey(1) < 0:
     has_frame, show = True, v.image
@@ -100,11 +110,13 @@ while cv.waitKey(1) < 0:
         cv.putText(show, time_frame_label, (5, height-15), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
         cv.imshow('Action Recognition based on OpenPose', show)
+        video_writer.write(show)
 
         # # 采集数据，用于训练过程(for training)
         # joints_norm_per_frame = np.array(pose[-1]).astype(np.str)
         # f.write(' '.join(joints_norm_per_frame))
         # f.write('\n')
 
+video_writer.release()
 cap.release()
 # f.close()

@@ -22,4 +22,4 @@ class Actions(Enum):
     sit = 0
     wave = 1
     fall_down = 2
-    none = 3
+    others = 3

@@ -13,7 +13,7 @@ args = parser.parse_args()
 
 # 导入相关模型
 estimator = load_pretrain_model('VGG_origin')
-action_classifier = load_action_premodel('Action/ncrl_framewise_recognition.h5')
+action_classifier = load_action_premodel('Action/training/ncrl_framewise_recognition.h5')
 
 # 参数初始化
 realtime_fps = '0.0000'
@@ -25,7 +25,7 @@ frame_count = 0
 
 # 读写视频文件（仅测试过webcam输入）
 cap = choose_run_mode(args)
-# video_writer = set_video_writer(cap, write_fps=int(7.0))
+video_writer = set_video_writer(cap, write_fps=int(7.0))
 
 
 # # 保存关节数据的txt文件，用于训练过程(for training)
@@ -66,13 +66,13 @@ while cv.waitKey(1) < 0:
         cv.putText(show, time_frame_label, (5, height-15), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
         cv.imshow('Action Recognition based on OpenPose', show)
-        # video_writer.write(show)
+        video_writer.write(show)
 
         # # 采集数据，用于训练过程(for training)
         # joints_norm_per_frame = np.array(pose[-1]).astype(np.str)
         # f.write(' '.join(joints_norm_per_frame))
         # f.write('\n')
 
-# video_writer.release()
+video_writer.release()
 cap.release()
 # f.close()
