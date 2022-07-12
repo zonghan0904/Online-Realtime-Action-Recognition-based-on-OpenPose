@@ -47,10 +47,17 @@ class V:
     def __init__(self):
         # self.sub = rospy.Subscriber("/camera1/color/image_raw", Image, self.image_cb)
         self.sub = rospy.Subscriber("/device_0/sensor_1/Color_0/image/data", Image, self.image_cb)
-        self.image = np.zeros((1, 1))
+        self.image = None
+        self.rate = rospy.Rate(100)
+        self._initialize()
 
     def image_cb(self, msg):
         self.image = imgmsg_to_cv2(msg)
+
+    def _initialize(self):
+        while self.image is None:
+            self.rate.sleep()
+
 
 rospy.init_node("test_node")
 v = V()
@@ -74,6 +81,7 @@ frame_count = 0
 # # 保存关节数据的txt文件，用于训练过程(for training)
 # f = open('origin_data.txt', 'a+')
 video_writer = set_video_writer(write_fps=int(7.0))
+fps_list = []
 
 while cv.waitKey(1) < 0:
     has_frame, show = True, v.image
@@ -93,9 +101,10 @@ while cv.waitKey(1) < 0:
         if (time.time() - start_time) > fps_interval:
             # 计算这个interval过程中的帧数，若interval为1秒，则为FPS
             realtime_fps = fps_count / (time.time() - start_time)
+            fps_list.append(realtime_fps)
             fps_count = 0  # 帧数清零
             start_time = time.time()
-        fps_label = 'FPS:{0:.2f}'.format(realtime_fps)
+        fps_label = 'FPS:{0:.2f}'.format(float(realtime_fps))
         cv.putText(show, fps_label, (width-160, 25), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
         # 显示检测到的人数
@@ -117,6 +126,10 @@ while cv.waitKey(1) < 0:
         # f.write(' '.join(joints_norm_per_frame))
         # f.write('\n')
 
+fps_list = np.array(fps_list)
+print(f"Highest FPS: {fps_list.max()}")
+print(f"Lowest FPS: {fps_list.min()}")
+print(f"Average FPS: {fps_list.mean()}")
 video_writer.release()
 cap.release()
 # f.close()

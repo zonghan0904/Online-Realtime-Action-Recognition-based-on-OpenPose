@@ -96,6 +96,7 @@ class TfPoseVisualizer:
         rois = []
         infos = []
         # _get_scaled_img
+        print(self.target_size)
         if npimg.shape[:2] != (self.target_size[1], self.target_size[0]):
             # resize
             npimg = cv.resize(npimg, self.target_size)
