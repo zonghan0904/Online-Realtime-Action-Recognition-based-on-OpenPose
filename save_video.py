@@ -1,12 +1,21 @@
 import cv2
+import time
+
+duration = 30
+video_name = 'fall_down.mp4'
+WIDTH = 1280
+HEIGHT = 720
 
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
+fps = int(cap.get(cv2.CAP_PROP_FPS))
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter('output.avi', fourcc, 20.0, (1280,  720))
-while cap.isOpened():
+out = cv2.VideoWriter(video_name, fourcc, fps, (WIDTH,  HEIGHT))
+
+start = time.time()
+while int(time.time()-start) < duration:
     ret, frame = cap.read()
     if not ret:
         print("Can't receive frame (stream end?). Exiting ...")
