@@ -12,6 +12,8 @@ from sensor_msgs.msg import Image
 import numpy as np
 import sys
 import cv2
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 def imgmsg_to_cv2(img_msg):
     dtype = np.dtype("uint8") # Hardcode to 8 bits...
@@ -129,7 +131,7 @@ while camera_reader.header != last_header:
     # f.write(' '.join(joints_norm_per_frame))
     # f.write('\n')
 
-fps_list = np.array(fps_list)
+fps_list = np.array(fps_list)[1:]
 print(f"Highest FPS: {fps_list.max()}")
 print(f"Lowest FPS: {fps_list.min()}")
 print(f"Average FPS: {fps_list.mean()}")

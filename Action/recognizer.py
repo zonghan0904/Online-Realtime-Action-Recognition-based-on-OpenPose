@@ -152,8 +152,8 @@ def framewise_recognize(pose, pretrained_model):
                 joints_norm_single_person = joints_norm_per_frame[j*36:(j+1)*36]
                 joints_norm_single_person = np.array(joints_norm_single_person).reshape(-1, 36)
                 if np.count_nonzero(joints_norm_single_person) > 20:
-                    probs = pretrained_model.predict(joints_norm_single_person)
-                    print(probs)
+                    probs = pretrained_model.predict(joints_norm_single_person, verbose=0)
+                    # print(probs)
                     max_score = np.max(probs)
                     if max_score < PRED_THRESHOLD:
                         init_label = "others"

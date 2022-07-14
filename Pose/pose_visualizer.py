@@ -4,6 +4,8 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 from .coco_format import CocoPart, CocoColors, CocoPairsRender
 from .pose_estimator import estimate
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 
 class TfPoseVisualizer:
@@ -96,7 +98,7 @@ class TfPoseVisualizer:
         rois = []
         infos = []
         # _get_scaled_img
-        print(self.target_size)
+        # print(self.target_size)
         if npimg.shape[:2] != (self.target_size[1], self.target_size[0]):
             # resize
             npimg = cv.resize(npimg, self.target_size)
