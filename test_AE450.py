@@ -43,15 +43,16 @@ def set_video_writer(write_fps=15):
                           write_fps,
                           (1280, 720))
 
-class V:
+class CameraReader:
     def __init__(self):
         # self.sub = rospy.Subscriber("/camera1/color/image_raw", Image, self.image_cb)
         self.sub = rospy.Subscriber("/device_0/sensor_1/Color_0/image/data", Image, self.image_cb)
         self.image = None
-        self.rate = rospy.Rate(100)
+        self.rate = rospy.Rate(30)
         self._initialize()
 
     def image_cb(self, msg):
+        self.header = msg.header
         self.image = imgmsg_to_cv2(msg)
 
     def _initialize(self):
@@ -59,8 +60,9 @@ class V:
             self.rate.sleep()
 
 
-rospy.init_node("test_node")
-v = V()
+rospy.init_node("test_ae450_node")
+image_publisher = rospy.Publisher("/ae450/image/color", Image, queue_size=10)
+camera_reader = CameraReader()
 
 parser = argparse.ArgumentParser(description='Action Recognition by OpenPose')
 parser.add_argument('--video', help='Path to video file.')
@@ -80,56 +82,56 @@ frame_count = 0
 
 # # 保存关节数据的txt文件，用于训练过程(for training)
 # f = open('origin_data.txt', 'a+')
-video_writer = set_video_writer(write_fps=int(7.0))
+# video_writer = set_video_writer(write_fps=int(7.0))
 fps_list = []
 
-while cv.waitKey(1) < 0:
-    has_frame, show = True, v.image
-    if has_frame:
-        fps_count += 1
-        frame_count += 1
+last_header = None
+while camera_reader.header != last_header:
+    last_header, show = camera_reader.header, camera_reader.image
+    fps_count += 1
+    frame_count += 1
 
-        # pose estimation
-        humans = estimator.inference(show)
-        # get pose info
-        pose = TfPoseVisualizer.draw_pose_rgb(show, humans)  # return frame, joints, bboxes, xcenter
-        # recognize the action framewise
-        show = framewise_recognize(pose, action_classifier)
+    # pose estimation
+    humans = estimator.inference(show)
+    # get pose info
+    pose = TfPoseVisualizer.draw_pose_rgb(show, humans)  # return frame, joints, bboxes, xcenter
+    # recognize the action framewise
+    show = framewise_recognize(pose, action_classifier)
 
-        height, width = show.shape[:2]
-        # 显示实时FPS值
-        if (time.time() - start_time) > fps_interval:
-            # 计算这个interval过程中的帧数，若interval为1秒，则为FPS
-            realtime_fps = fps_count / (time.time() - start_time)
-            fps_list.append(realtime_fps)
-            fps_count = 0  # 帧数清零
-            start_time = time.time()
-        fps_label = 'FPS:{0:.2f}'.format(float(realtime_fps))
-        cv.putText(show, fps_label, (width-160, 25), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+    height, width = show.shape[:2]
+    # 显示实时FPS值
+    if (time.time() - start_time) > fps_interval:
+        # 计算这个interval过程中的帧数，若interval为1秒，则为FPS
+        realtime_fps = fps_count / (time.time() - start_time)
+        fps_list.append(realtime_fps)
+        fps_count = 0  # 帧数清零
+        start_time = time.time()
+    fps_label = 'FPS:{0:.2f}'.format(float(realtime_fps))
+    cv.putText(show, fps_label, (width-160, 25), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
-        # 显示检测到的人数
-        num_label = "Human: {0}".format(len(humans))
-        cv.putText(show, num_label, (5, height-45), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+    # 显示检测到的人数
+    num_label = "Human: {0}".format(len(humans))
+    cv.putText(show, num_label, (5, height-45), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
-        # 显示目前的运行时长及总帧数
-        if frame_count == 1:
-            run_timer = time.time()
-        run_time = time.time() - run_timer
-        time_frame_label = '[Time:{0:.2f} | Frame:{1}]'.format(run_time, frame_count)
-        cv.putText(show, time_frame_label, (5, height-15), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+    # 显示目前的运行时长及总帧数
+    if frame_count == 1:
+        run_timer = time.time()
+    run_time = time.time() - run_timer
+    time_frame_label = '[Time:{0:.2f} | Frame:{1}]'.format(run_time, frame_count)
+    cv.putText(show, time_frame_label, (5, height-15), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
-        cv.imshow('Action Recognition based on OpenPose', show)
-        video_writer.write(show)
+    image_publisher.publish(cv2_to_imgmsg(show))
+    # cv.imshow('Action Recognition based on OpenPose', show)
+    # video_writer.write(show)
 
-        # # 采集数据，用于训练过程(for training)
-        # joints_norm_per_frame = np.array(pose[-1]).astype(np.str)
-        # f.write(' '.join(joints_norm_per_frame))
-        # f.write('\n')
+    # # 采集数据，用于训练过程(for training)
+    # joints_norm_per_frame = np.array(pose[-1]).astype(np.str)
+    # f.write(' '.join(joints_norm_per_frame))
+    # f.write('\n')
 
 fps_list = np.array(fps_list)
 print(f"Highest FPS: {fps_list.max()}")
 print(f"Lowest FPS: {fps_list.min()}")
 print(f"Average FPS: {fps_list.mean()}")
-video_writer.release()
-cap.release()
+# video_writer.release()
 # f.close()
