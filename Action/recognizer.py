@@ -99,7 +99,6 @@ trk_clr = (0, 255, 0)
 def load_action_premodel(model):
     return load_model(model)
 
-
 def framewise_recognize(pose, pretrained_model):
     frame, joints, bboxes, xcenter = pose[0], pose[1], pose[2], pose[3]
     joints_norm_per_frame = np.array(pose[-1])
@@ -152,7 +151,7 @@ def framewise_recognize(pose, pretrained_model):
                 joints_norm_single_person = joints_norm_per_frame[j*36:(j+1)*36]
                 joints_norm_single_person = np.array(joints_norm_single_person).reshape(-1, 36)
                 if np.count_nonzero(joints_norm_single_person) > 20:
-                    probs = pretrained_model.predict(joints_norm_single_person, verbose=0)
+                    probs = pretrained_model.predict(joints_norm_single_person)
                     # print(probs)
                     max_score = np.max(probs)
                     if max_score < PRED_THRESHOLD:
