@@ -25,7 +25,8 @@ frame_count = 0
 
 # 读写视频文件（仅测试过webcam输入）
 cap = choose_run_mode(args)
-video_writer = set_video_writer(cap, write_fps=int(7.0))
+# video_writer = set_video_writer(cap, write_fps=int(7.0))
+fps_list = []
 
 
 # # 保存关节数据的txt文件，用于训练过程(for training)
@@ -42,13 +43,14 @@ while cv.waitKey(1) < 0:
         # get pose info
         pose = TfPoseVisualizer.draw_pose_rgb(show, humans)  # return frame, joints, bboxes, xcenter
         # recognize the action framewise
-        show = framewise_recognize(pose, action_classifier)
+        show, _ = framewise_recognize(pose, action_classifier)
 
         height, width = show.shape[:2]
         # 显示实时FPS值
         if (time.time() - start_time) > fps_interval:
             # 计算这个interval过程中的帧数，若interval为1秒，则为FPS
             realtime_fps = fps_count / (time.time() - start_time)
+            fps_list.append(realtime_fps)
             fps_count = 0  # 帧数清零
             start_time = time.time()
         fps_label = f'FPS:{round(realtime_fps, 2)}'
@@ -66,13 +68,17 @@ while cv.waitKey(1) < 0:
         cv.putText(show, time_frame_label, (5, height-15), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
         cv.imshow('Action Recognition based on OpenPose', show)
-        video_writer.write(show)
+        # video_writer.write(show)
 
         # # 采集数据，用于训练过程(for training)
         # joints_norm_per_frame = np.array(pose[-1]).astype(np.str)
         # f.write(' '.join(joints_norm_per_frame))
         # f.write('\n')
 
-video_writer.release()
+fps_list = np.array(fps_list)[1:]
+print(f"Highest FPS: {fps_list.max()}")
+print(f"Lowest FPS: {fps_list.min()}")
+print(f"Average FPS: {fps_list.mean()}")
+# video_writer.release()
 cap.release()
 # f.close()

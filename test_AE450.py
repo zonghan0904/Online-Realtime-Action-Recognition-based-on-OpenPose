@@ -6,6 +6,7 @@ import time
 from utils import load_pretrain_model
 from Pose.pose_visualizer import TfPoseVisualizer
 from Action.recognizer import load_action_premodel, framewise_recognize
+from sensor_msgs.msg import RegionOfInterest
 
 import rospy
 from sensor_msgs.msg import Image
@@ -16,27 +17,8 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 import tensorflow.compat.v2 as tf
 
-def imgmsg_to_cv2(img_msg):
-    dtype = np.dtype("uint8") # Hardcode to 8 bits...
-    dtype = dtype.newbyteorder('>' if img_msg.is_bigendian else '<')
-    image_opencv = np.ndarray(shape=(img_msg.height, img_msg.width, 3), # and three channels of data. Since OpenCV works with bgr natively, we don't need to reorder the channels.
-                    dtype=dtype, buffer=img_msg.data)
-    if img_msg.encoding == "rgb8":
-        image_opencv = cv2.cvtColor(image_opencv, cv2.COLOR_RGB2BGR)
-    # If the byt order is different between the message and the system.
-    if img_msg.is_bigendian == (sys.byteorder == 'little'):
-        image_opencv = image_opencv.byteswap().newbyteorder()
-    return image_opencv
-
-def cv2_to_imgmsg(cv_image):
-    img_msg = Image()
-    img_msg.height = cv_image.shape[0]
-    img_msg.width = cv_image.shape[1]
-    img_msg.encoding = "bgr8"
-    img_msg.is_bigendian = 0
-    img_msg.data = cv_image.tostring()
-    img_msg.step = len(img_msg.data) // img_msg.height # That double line is actually integer division, not a comment
-    return img_msg
+from cv_bridge import CvBridge
+bridge = CvBridge()
 
 def set_video_writer(write_fps=15):
     out_file_path = "./test_out/AE450.mp4"
@@ -48,15 +30,20 @@ def set_video_writer(write_fps=15):
 
 class CameraReader:
     def __init__(self):
-        # self.sub = rospy.Subscriber("/camera1/color/image_raw", Image, self.image_cb)
-        self.sub = rospy.Subscriber("/device_0/sensor_1/Color_0/image/data", Image, self.image_cb)
+        # self.sub_image = rospy.Subscriber("/device_0/sensor_1/Color_0/image/data", Image, self.image_cb)
+        self.sub_image = rospy.Subscriber("/camera0/color/image_raw", Image, self.image_cb)
+        self.sub_depth_image = rospy.Subscriber("/camera0/aligned_depth_to_color/image_raw", Image, self.depth_image_cb)
         self.image = None
+        self.depth_image = None
         self.rate = rospy.Rate(30)
         self._initialize()
 
     def image_cb(self, msg):
         self.header = msg.header
-        self.image = imgmsg_to_cv2(msg)
+        self.image = bridge.imgmsg_to_cv2(msg, "bgr8")
+
+    def depth_image_cb(self, msg):
+        self.depth_image = bridge.imgmsg_to_cv2(msg)
 
     def _initialize(self):
         while self.image is None:
@@ -106,6 +93,7 @@ class LiteModel:
 
 rospy.init_node("test_ae450_node")
 image_publisher = rospy.Publisher("/ae450/image/color", Image, queue_size=10)
+ROI_publisher = rospy.Publisher("/ae450/image/roi", RegionOfInterest, queue_size=10)
 camera_reader = CameraReader()
 
 parser = argparse.ArgumentParser(description='Action Recognition by OpenPose')
@@ -141,7 +129,7 @@ while camera_reader.header != last_header:
     # get pose info
     pose = TfPoseVisualizer.draw_pose_rgb(show, humans)  # return frame, joints, bboxes, xcenter
     # recognize the action framewise
-    show = framewise_recognize(pose, action_classifier)
+    show, nearest_person = framewise_recognize(pose, action_classifier, camera_reader.depth_image)
 
     height, width = show.shape[:2]
     # 显示实时FPS值
@@ -165,7 +153,13 @@ while camera_reader.header != last_header:
     time_frame_label = '[Time:{0:.2f} | Frame:{1}]'.format(run_time, frame_count)
     cv.putText(show, time_frame_label, (5, height-15), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
-    image_publisher.publish(cv2_to_imgmsg(show))
+    image_publisher.publish(bridge.cv2_to_imgmsg(show))
+    if nearest_person is not None:
+        roi = RegionOfInterest()
+        roi.x_offset = nearest_person[0]
+        roi.y_offset = nearest_person[1]
+        roi.height = nearest_person[2]
+        ROI_publisher.publish(roi)
     # cv.imshow('Action Recognition based on OpenPose', show)
     # video_writer.write(show)
 

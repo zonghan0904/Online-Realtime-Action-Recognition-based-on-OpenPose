@@ -121,5 +121,5 @@ test_out/webcam_test_out.mp4
 test_out/webcam_tf_out.mp4
 test_out/*.mp4
 logs
-human_pose_dataset
+*_dataset
 bag

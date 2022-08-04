@@ -10,6 +10,9 @@ from Tracking.deep_sort.tracker import Tracker
 from keras.models import load_model
 from .action_enum import Actions
 
+from cv_bridge import CvBridge
+bridge = CvBridge()
+
 # Use Deep-sort(Simple Online and Realtime Tracking)
 # To track multi-person for multi-person actions recognition
 
@@ -99,7 +102,9 @@ trk_clr = (0, 255, 0)
 def load_action_premodel(model):
     return load_model(model)
 
-def framewise_recognize(pose, pretrained_model):
+def framewise_recognize(pose, pretrained_model, depth_image=None):
+    min_depth = np.inf
+    nearest_person = None
     frame, joints, bboxes, xcenter = pose[0], pose[1], pose[2], pose[3]
     joints_norm_per_frame = np.array(pose[-1])
 
@@ -172,5 +177,14 @@ def framewise_recognize(pose, pretrained_model):
                                1.5, (0, 0, 255), 4)
             # 画track_box
             cv.rectangle(frame, (xmin - 10, ymin - 30), (xmax + 10, ymax), trk_clr, 2)
-    return frame
+
+            if depth_image is not None:
+                box_center = (int((xmin + xmax)/2), int((ymin + ymax)/2)-15)
+                cv.circle(frame, box_center, 3, (0, 0, 255), 10)   # center of box
+                depth = depth_image[box_center[1], box_center[0]]
+                if depth < min_depth:
+                    min_depth = depth
+                    nearest_person = (box_center[0], box_center[1], min_depth)
+
+    return frame, nearest_person
 
