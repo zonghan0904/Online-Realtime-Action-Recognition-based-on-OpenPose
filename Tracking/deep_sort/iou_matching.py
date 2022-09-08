@@ -36,7 +36,12 @@ def iou(bbox, candidates):
     area_intersection = wh.prod(axis=1)
     area_bbox = bbox[2:].prod()
     area_candidates = candidates[:, 2:].prod(axis=1)
-    return area_intersection / (area_bbox + area_candidates - area_intersection)
+    if ((area_bbox + area_candidates - area_intersection).all() != 0):
+        output = area_intersection / (area_bbox + area_candidates - area_intersection)
+    else:
+        print("\033[93m"+"[WARNING] IOU area is divided by zero"+"[0m") # zonghan
+        output = area_intersection  # zonghan
+    return output
 
 
 def iou_cost(tracks, detections, track_indices=None,

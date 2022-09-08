@@ -179,7 +179,10 @@ def framewise_recognize(pose, pretrained_model, depth_image=None):
             cv.rectangle(frame, (xmin - 10, ymin - 30), (xmax + 10, ymax), trk_clr, 2)
 
             if depth_image is not None:
-                box_center = (int((xmin + xmax)/2), int((ymin + ymax)/2)-15)
+                depth_image_height, depth_image_width = depth_image.shape
+                box_center_x = np.clip(int((xmin + xmax)/2), 0, depth_image_width-1)
+                box_center_y = np.clip(int((ymin + ymax)/2)-15, 0, depth_image_height-1)
+                box_center = (box_center_x, box_center_y)
                 cv.circle(frame, box_center, 3, (0, 0, 255), 10)   # center of box
                 depth = depth_image[box_center[1], box_center[0]]
                 if depth < min_depth:

@@ -154,12 +154,15 @@ while camera_reader.header != last_header:
     cv.putText(show, time_frame_label, (5, height-15), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
     image_publisher.publish(bridge.cv2_to_imgmsg(show))
-    if nearest_person is not None:
-        roi = RegionOfInterest()
-        roi.x_offset = nearest_person[0]
-        roi.y_offset = nearest_person[1]
-        roi.height = nearest_person[2]
-        ROI_publisher.publish(roi)
+    try:
+        if nearest_person is not None:
+            roi = RegionOfInterest()
+            roi.x_offset = nearest_person[0]
+            roi.y_offset = nearest_person[1]
+            roi.height = nearest_person[2]
+            ROI_publisher.publish(roi)
+    except Exception as e:
+        print("\033[93m" + str(e) + "\033[0m")
     # cv.imshow('Action Recognition based on OpenPose', show)
     # video_writer.write(show)
 
