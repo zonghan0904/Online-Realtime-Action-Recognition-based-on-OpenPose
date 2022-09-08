@@ -124,6 +124,8 @@ while camera_reader.header != last_header:
     fps_count += 1
     frame_count += 1
 
+    init_time = time.time()
+
     # pose estimation
     humans = estimator.inference(show)
     # get pose info
@@ -141,6 +143,8 @@ while camera_reader.header != last_header:
         start_time = time.time()
     fps_label = 'FPS:{0:.2f}'.format(float(realtime_fps))
     cv.putText(show, fps_label, (width-160, 25), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+    elapsed_time = 'Elapsed Time:{0:.3f} s'.format(float(time.time() - init_time))
+    cv.putText(show, elapsed_time, (width-345, 60), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
     # 显示检测到的人数
     num_label = "Human: {0}".format(len(humans))

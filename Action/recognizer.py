@@ -179,15 +179,36 @@ def framewise_recognize(pose, pretrained_model, depth_image=None):
             cv.rectangle(frame, (xmin - 10, ymin - 30), (xmax + 10, ymax), trk_clr, 2)
 
             if depth_image is not None:
-                depth_image_height, depth_image_width = depth_image.shape
-                box_center_x = np.clip(int((xmin + xmax)/2), 0, depth_image_width-1)
-                box_center_y = np.clip(int((ymin + ymax)/2)-15, 0, depth_image_height-1)
-                box_center = (box_center_x, box_center_y)
-                cv.circle(frame, box_center, 3, (0, 0, 255), 10)   # center of box
-                depth = depth_image[box_center[1], box_center[0]]
-                if depth < min_depth:
-                    min_depth = depth
-                    nearest_person = (box_center[0], box_center[1], min_depth)
+                detected_joints_count = 0
+                detected_joints_depth_sum = 0
+                detected_joints_x_sum = 0
+                detected_joints_y_sum = 0
+                for joints_id in range(18):
+                    try:
+                        detected_joints_x_sum += joints[0][joints_id][0]
+                        detected_joints_y_sum += joints[0][joints_id][1]
+                        detected_joints_depth_sum += depth_image[joints[0][joints_id][1], joints[0][joints_id][0]]
+                        detected_joints_count += 1
+                    except:
+                        # joints_id is not detected
+                        pass
+                if detected_joints_count != 0:
+                    joints_average_x = detected_joints_x_sum // detected_joints_count
+                    joints_average_y = detected_joints_y_sum // detected_joints_count
+                    joints_average_depth = detected_joints_depth_sum // detected_joints_count
+
+                    depth_image_height, depth_image_width = depth_image.shape
+                    joints_average_x = np.clip(joints_average_x, 0, depth_image_width-1)
+                    joints_average_y = np.clip(joints_average_y, 0, depth_image_height-1)
+                    joints_average_center = (joints_average_x, joints_average_y)
+                    # cv.circle(frame, joints_average_center, 3, (0, 0, 255), 10)   # center of human
+                else:
+                    joints_average_center = (0, 0)
+                    joints_average_depth = 0
+
+                if joints_average_depth < min_depth:
+                    min_depth = joints_average_depth
+                    nearest_person = (joints_average_center[0], joints_average_center[1], min_depth)
 
     return frame, nearest_person
 
