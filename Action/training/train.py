@@ -124,7 +124,7 @@ Y = dataset[:, 36]
 # encoder_Y = encoder.fit_transform(Y)
 # print(encoder_Y[0], encoder_Y[900], encoder_Y[1800], encoder_Y[2700])
 # encoder_Y = [0]*744 + [1]*722 + [2]*815 + [3]*1008 + [4]*811
-encoder_Y = [0]*2310 + [1]*2293 + [2]*581 + [3]*2691
+encoder_Y = [0]*2310 + [1]*2293 + [2]*675 + [3]*2691
 # one hot 编码
 dummy_Y = np_utils.to_categorical(encoder_Y)
 
